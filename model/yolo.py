@@ -4,8 +4,11 @@ import torch
 from torch import nn
 
 class YOLOv1(nn.Module):
-    def __init__(self):
+    def __init__(self, num_boxes=2, num_classes=20):
         super(YOLOv1, self).__init__()
+
+        self.num_boxes = num_boxes
+        self.num_classes = num_classes
 
         self.model = nn.Sequential(
             BasicBlock(3, 64, kernel_size=7, stride=2),
@@ -33,11 +36,12 @@ class YOLOv1(nn.Module):
             nn.BatchNorm1d(4096),
             nn.LeakyReLU(),
 
-            nn.Linear(4096, 7 * 7 * 30)
+            nn.Linear(4096, 7 * 7 * (num_boxes * 5 + num_classes))
         )
     
     def forward(self, x):
-        return self.model(x)
+        x = self.model(x)
+        return x.reshape(-1, 7, 7, self.num_boxes * 5 + self.num_classes)
 
 class BasicBlock(nn.Module):
     """
